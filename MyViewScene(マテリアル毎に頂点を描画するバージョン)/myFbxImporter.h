@@ -107,7 +107,7 @@ public:
 		MAX_FBX
 	} IMPORTED_FBX;
 	// 取得するFBXファイル情報の種類
-	typedef enum
+	/*typedef enum
 	{
 		VERTEX_NUM = 0,
 		INDEX_NUM,
@@ -122,7 +122,7 @@ public:
 		UV_SET,	
 		MATERIAL,
 		MAX_FBX_INFO
-	} FBX_INFO;
+	} FBX_INFO;*/
 	/* メンバ関数 */
 	MyFbxFile();
 	~MyFbxFile();
@@ -140,7 +140,7 @@ public:
 	void GetVertexColor(FbxMesh* pMesh);
 	void GetUV(FbxMesh* pMesh);
 	void GetTextureNames(FbxMesh* pMesh);
-	void CreateVertex(void);
+	void CreateVertexBuffer(void);
 
 	// FBXファイルの情報（下記のメンバ変数）をinfoにセットする関数
 	int				GetNumMaterial(void);

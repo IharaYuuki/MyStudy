@@ -468,12 +468,12 @@ void MyFbxFile::GetMesh(FbxNode* pNode)
 	// テクスチャ情報を取得
 	GetTextureNames(lMesh);
 	// マテリアル毎に頂点バッファを作成
-	CreateVertex();
+	CreateVertexBuffer();
 }
 //********************************************************************************************************************
 // funcinfo：マテリアル対応ポリゴン頂点配列を作成、マテリアル対応頂点数を計算
 //********************************************************************************************************************
-void MyFbxFile::CreateVertex(void)
+void MyFbxFile::CreateVertexBuffer(void)
 {
 	/* マテリアルに対応するポリゴンの頂点数を取得 */
 	// マテリアル対応頂点数を初期ポリゴン化
@@ -852,7 +852,6 @@ void MyFbxFile::GetNormal(FbxMesh* pMesh)
 				// リファレンスモードに依る分岐
 				switch (reference)
 				{
-				// リファレンスモードがコントロール点の並び順で法線が格納されている場合
 				case FbxGeometryElement::eDirect:
 					// 法線をコピー
 					for(int normalCnt = 0; normalCnt < normalNum; normalCnt++)
