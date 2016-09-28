@@ -58,8 +58,9 @@ void MyFbxImporter::GetFbxInfo(void)
 
     // FBXファイルへのパスを格納
 	FbxString lFilePath[MyFbxFile::MAX_FBX] = {
-		("data/MODEL/first1.fbx"),
-		//("data/MODEL/monstercharacter.fbx"),
+		//("data/MODEL/first1.fbx"),
+		("data/MODEL/monstercharacter.fbx"),
+		//("data/MODEL/Alicia_solid_Unity.fbx"),
 	};
 
 	// ポリゴンを三角化するためのコンバーター
@@ -387,7 +388,7 @@ void MyFbxFile::GetContent(FbxNode* pNode)
 	// ノードの属性が存在しないならば
     if(pNode->GetNodeAttribute() == NULL)
     {
-        FBXSDK_printf("NULL Node Attribute\n\n");
+        //FBXSDK_printf("NULL Node Attribute\n\n");
     }
 	// ノードの属性が存在するならば
     else

@@ -45,15 +45,15 @@ HRESULT InitLight(void)
 			// ライト0の拡散光の設定
 			g_aLight[nCntLight].Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 			// ライト0の方向の設定
-			vecDir = D3DXVECTOR3(0.0f, 0.0f, 1.0f);
+			vecDir = D3DXVECTOR3(0.0f, -1.0f, -1.0f);
 			break;
 		case 1:
 			g_aLight[nCntLight].Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
-			vecDir = D3DXVECTOR3(0.0f, 0.0f, -1.00f);
+			vecDir = D3DXVECTOR3(-1.0f, -0.5f, 1.0f);
 			break;
 		case 2:
 			g_aLight[nCntLight].Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
-			vecDir = D3DXVECTOR3(1.0f, 0.0f, 0.0f);
+			vecDir = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
 			break;
 		case 3:
 			g_aLight[nCntLight].Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
@@ -93,10 +93,18 @@ void UninitLight(void)
 {
 }
 
+
+
 //=============================================================================
 // ライトの更新処理
 //=============================================================================
 void UpdateLight(void)
 {
 }
-
+//=============================================================================
+// ライトを取得
+//=============================================================================
+D3DLIGHT9 *GetLight(int num)
+{
+	return &g_aLight[num];
+}

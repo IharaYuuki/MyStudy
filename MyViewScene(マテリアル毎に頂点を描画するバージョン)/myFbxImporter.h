@@ -73,6 +73,7 @@ typedef struct MYMATERIAL
 	int			numPolygon;
 	MyVertex	*vertexAry;					// ポリゴン頂点配列へのポインタ
 	int			numPolygonVertex;			// マテリアルに対応するポリゴン頂点の総数
+	std::string texture;					// テクスチャまでのパス
 } MyMaterial;
 
 //********************************************************************************************************************

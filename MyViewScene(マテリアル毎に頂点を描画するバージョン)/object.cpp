@@ -9,6 +9,9 @@
 #include <string>
 #include <list>
 #include "debugProc.h"
+#include "effectFile.h"
+#include "camera.h"
+#include "light.h"
 
 //********************************************************************************************************************
 // マクロ定義
@@ -94,16 +97,21 @@ HRESULT Object::Init(int importedFbx)
 	this -> material = myFbxFile -> GetMaterial();
 	this -> vtxBuff = new LPDIRECT3DVERTEXBUFFER9[ this -> numMaterial ];
 
+#if _DEBUG
 	this -> numPolygon = myFbxFile -> GetNumPolygon();
 	this -> numVertex = myFbxFile -> GetNumControlPoints();		
 	this -> numIndex = myFbxFile -> GetNumIndex();
-	
+#endif
+
+	// 頂点カラーとＵＶが存在するのかどうかを確認するためのGet
+	this -> vtxColor = myFbxFile -> GetVertexColorAry();
+	this -> uvSet = myFbxFile -> GetUvSet();
+
 	/*this -> numUvSet = myFbxFile -> GetNumUvSet();		
 	this -> vtxAry = myFbxFile -> GetControlPointsAry();	
 	this -> idxAry = myFbxFile -> GetIndexAry();
 	this -> normalAry = myFbxFile -> GetNormalAry();
-	this -> vtxColor = myFbxFile -> GetVertexColorAry();
-	this -> uvSet = myFbxFile -> GetUvSet();
+	
 	this -> polygonSize = myFbxFile -> GetPolygonSize();*/
 
 	// マテリアル数分繰り返す
@@ -119,16 +127,6 @@ HRESULT Object::Init(int importedFbx)
 		{
 			return E_FAIL;
 		}
-		//// オブジェクトのインデックスバッファを生成
-		//if(FAILED(pDevice -> CreateIndexBuffer(sizeof(WORD) * this -> numIndex,
-		//										D3DUSAGE_WRITEONLY,
-		//										D3DFMT_INDEX16,
-		//										D3DPOOL_MANAGED,
-		//										&this -> idxBuff,
-		//										NULL)))
-		//{
-		//	return E_FAIL;
-		//}
 
 		{//頂点バッファの中身を埋める
 			VERTEX_3D *vtx;
@@ -136,6 +134,7 @@ HRESULT Object::Init(int importedFbx)
 			// 頂点データの範囲をロックし、頂点バッファへのポインタを取得
 			this->vtxBuff[matCnt]->Lock(0,0,(void**)&vtx,0);
 
+			// マテリアルに対応するポリゴン頂点の数だけ繰り返す
 			for(int polyVtxCnt = 0; polyVtxCnt < this -> material[matCnt].numPolygonVertex; polyVtxCnt++)
 			{
 				// 頂点座標の設定
@@ -145,24 +144,17 @@ HRESULT Object::Init(int importedFbx)
 				vtx[polyVtxCnt].nor = this -> material[matCnt].vertexAry[polyVtxCnt].normal;
 			
 				// 頂点カラーの設定
-				if(vtxColor != NULL)
+				if(this->vtxColor != NULL)
 				{
 					vtx[polyVtxCnt].col = this -> material[matCnt].vertexAry[polyVtxCnt].color;
 				}
 				else
 				{
-					if(polyVtxCnt % 2 == 0)
-					{
-						vtx[polyVtxCnt].col = D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f);
-					}
-					else
-					{
-						vtx[polyVtxCnt].col = D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f);
-					}
+					vtx[polyVtxCnt].col = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 				}
 
 				// テクスチャ座標の設定
-				if(uvSet != NULL)
+				if(this->uvSet != NULL)
 				{
 					vtx[polyVtxCnt].uv = this -> material[matCnt].vertexAry[polyVtxCnt].uv;
 				}
@@ -175,22 +167,6 @@ HRESULT Object::Init(int importedFbx)
 			// 頂点データをアンロックする
 			this->vtxBuff[matCnt]->Unlock();
 		}
-
-		//{//インデックスバッファの中身を埋める
-		//	WORD *idx;
-
-		//	// インデックスデータの範囲をロックし、インデックスバッファへのポインタを取得
-		//	this->idxBuff->Lock(0,0,(void**)&idx,0);
-
-		//	// インデックスを代入
-		//	for(int cnt = 0; cnt < numIndex; cnt++)
-		//	{
-		//		idx[cnt] = idxAry[cnt];
-		//	}
-
-		//	// インデックスデータをアンロックする
-		//	this->idxBuff->Unlock();
-		//}
 	}
 
 	return S_OK;
@@ -229,6 +205,8 @@ void Object::Update(void)
 		PrintDebugProc("[ %d番目のマテリアル ]\n", materialCnt + 1);
 		PrintDebugProc("ポリゴン頂点数：%d\n", this -> material[materialCnt].numPolygonVertex);
 		PrintDebugProc("ポリゴン数：%d\n", this -> material[materialCnt].numPolygon);
+		PrintDebugProc("ambient：[r:%f g:%f b:%f]\n", this -> material[materialCnt].ambient.r, this -> material[materialCnt].ambient.g ,this -> material[materialCnt].ambient.b);
+		PrintDebugProc("diffuse：[r:%f g:%f b:%f]\n", this -> material[materialCnt].diffuse.r, this -> material[materialCnt].diffuse.g ,this -> material[materialCnt].diffuse.b);
 		PrintDebugProc("\n");
 	}
 
@@ -243,7 +221,9 @@ void Object::Update(void)
 void Object::Draw(void)
 {
 	LPDIRECT3DDEVICE9 pDevice = GetDevice();
-	D3DXMATRIX mtxScl, mtxRot, mtxTranslate;
+	LPD3DXEFFECT pEffect = GetEffect();
+	D3DXMATRIX mtxScl, mtxRot, mtxTranslate, mWVP;
+	CAMERA *pCarema = GetCamera();
 
 	//pDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE); // カリングなし
 
@@ -258,36 +238,69 @@ void Object::Draw(void)
 	// 移動を反映
 	D3DXMatrixTranslation(&mtxTranslate, this->pos.x, this->pos.y, this->pos.z);
 	D3DXMatrixMultiply(&this->mtxWorld, &this->mtxWorld, &mtxTranslate);
+
+#if 0
 	// ワールドマトリックスの設定
 	pDevice -> SetTransform(D3DTS_WORLD, &this->mtxWorld);
+#endif
+
+	// エフェクト内のグローバル変数をセット
+	D3DXMatrixIdentity(&mWVP);
+	mWVP = this->mtxWorld * pCarema->mtxView * pCarema->mtxProjection;
+	pEffect->SetMatrix( "mWVP", &mWVP );
+	pEffect->SetMatrix( "mWorld", &this->mtxWorld );
+	pEffect->SetVector( "lightDir0", &D3DXVECTOR4( GetLight(0)->Direction, 0.0f ) );
+	pEffect->SetVector( "lightCol0", &D3DXVECTOR4( GetLight(0)->Diffuse.r, GetLight(0)->Diffuse.g, GetLight(0)->Diffuse.b, GetLight(0)->Diffuse.a ) );
+	pEffect->SetVector( "lightDir1", &D3DXVECTOR4( GetLight(1)->Direction, 0.0f ) );
+	pEffect->SetVector( "lightCol1", &D3DXVECTOR4( GetLight(1)->Diffuse.r, GetLight(1)->Diffuse.g, GetLight(1)->Diffuse.b, GetLight(1)->Diffuse.a ) );
+	pEffect->SetVector( "lightDir2", &D3DXVECTOR4( GetLight(2)->Direction, 0.0f ) );
+	pEffect->SetVector( "lightCol2", &D3DXVECTOR4( GetLight(2)->Diffuse.r, GetLight(2)->Diffuse.g, GetLight(2)->Diffuse.b, GetLight(2)->Diffuse.a ) );
 	
+	// テクニックをセット
+	pEffect->SetTechnique( "MainShader" );
+	// エフェクト開始
+	UINT passes;
+    pEffect->Begin( &passes, 0 );
+    
 	// マテリアル数分繰り返す
 	for( int matCnt = 0; matCnt < this->numMaterial; matCnt++)
 	{
-		// 頂点バッファをデバイスのデータストリームにバインド
-		pDevice -> SetStreamSource(0, this->vtxBuff[matCnt], 0, sizeof(VERTEX_3D));
-		//// インデックスバッファをレンダリングパイプラインに設定
-		//pDevice -> SetIndices(idxBuff);
-		// 頂点フォーマットの設定
-		pDevice -> SetFVF(FVF_VERTEX_3D);
-		// テクスチャの設定
-		pDevice -> SetTexture(0,this -> tex);
-		// ポリゴンの描画
-		pDevice -> DrawPrimitive(	D3DPT_TRIANGLELIST,					// プリミティブの描き方 //D3DPT_TRIANGLELIST //D3DPT_TRIANGLESTRIP //D3DPT_TRIANGLEFAN //D3DPT_LINELIST
-									0,									// 頂点バッファの描き始めの頂点番号
-									this->material[matCnt].numPolygon	// 描画するポリゴン数
-									);
+		// エフェクト内のグローバル変数をセット
+		pEffect->SetVector( "matDiffuse", &D3DXVECTOR4( this -> material[matCnt].diffuse.r,
+														this -> material[matCnt].diffuse.g,
+														this -> material[matCnt].diffuse.b,
+														0.0f));
+		pEffect->SetVector( "matAmbient", &D3DXVECTOR4( this -> material[matCnt].ambient.r,
+														this -> material[matCnt].ambient.g,
+														this -> material[matCnt].ambient.b,
+														0.0f));
 
-
-		//// ポリゴンの描画
-		//pDevice -> DrawIndexedPrimitive(D3DPT_TRIANGLELIST,		// プリミティブの描き方 //D3DPT_TRIANGLELIST //D3DPT_TRIANGLESTRIP //D3DPT_TRIANGLEFAN //D3DPT_LINELIST
-		//									0,						// 最初の頂点インデックスまでのオフセット
-		//									0,						// 最小の頂点インデックス
-		//									this->numVertex,		// 頂点数
-		//									0,						// 読み取りを開始する位置
-		//									this->numPolygon		// ポリゴン数
-		//									);
-	}
+		// テクニックのパスの数だけ繰り返す
+		for(UINT i=0; i<passes; i++)
+		{
+			// パスをセット
+			pEffect->BeginPass(i);
+        
+			// 頂点バッファをデバイスのデータストリームにバインド
+			pDevice -> SetStreamSource(0, this->vtxBuff[matCnt], 0, sizeof(VERTEX_3D));
+			//// インデックスバッファをレンダリングパイプラインに設定
+			//pDevice -> SetIndices(idxBuff);
+			// 頂点フォーマットの設定
+			pDevice -> SetFVF(FVF_VERTEX_3D);
+			// テクスチャの設定
+			pDevice -> SetTexture(0,this -> tex);
+			// ポリゴンの描画
+			pDevice -> DrawPrimitive(	D3DPT_TRIANGLELIST,					// プリミティブの描き方 //D3DPT_TRIANGLELIST //D3DPT_TRIANGLESTRIP //D3DPT_TRIANGLEFAN //D3DPT_LINELIST
+										0,									// 頂点バッファの描き始めの頂点番号
+										this->material[matCnt].numPolygon	// 描画するポリゴン数
+										);
+		}
+		
+		// パスの終わり
+        pEffect->EndPass();
+    }
+	// エフェクト終了
+    pEffect->End();
 
 	pDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);	// 裏面をカリング
 

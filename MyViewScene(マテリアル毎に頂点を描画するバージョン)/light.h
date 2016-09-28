@@ -13,5 +13,5 @@
 HRESULT InitLight(void);
 void UninitLight(void);
 void UpdateLight(void);
-
+D3DLIGHT9 *GetLight(int num);
 #endif

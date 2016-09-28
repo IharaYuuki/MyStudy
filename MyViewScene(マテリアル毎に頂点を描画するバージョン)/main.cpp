@@ -12,6 +12,7 @@
 #include "debugProc.h"
 #include "myFbxImporter.h"
 #include "object.h"
+#include "effectFile.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -309,6 +310,9 @@ HRESULT Init(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 
 	InitCamera();
 	InitLight();
+
+	// エフェクトファイルを初期化
+	InitEffectFile();
 
 	// FBXファイルから情報を読み込む
 	MyFbxImporter::GetFbxInfo();
