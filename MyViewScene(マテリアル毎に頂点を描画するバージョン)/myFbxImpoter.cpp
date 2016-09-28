@@ -58,9 +58,8 @@ void MyFbxImporter::GetFbxInfo(void)
 
     // FBXファイルへのパスを格納
 	FbxString lFilePath[MyFbxFile::MAX_FBX] = {
-		//("data/MODEL/first1.fbx"),
-		("data/MODEL/monstercharacter.fbx"),
-		//("data/MODEL/Alicia_solid_Unity.fbx"),
+		("data/MODEL/first1.fbx"),
+		//("data/MODEL/monstercharacter.fbx"),
 	};
 
 	// ポリゴンを三角化するためのコンバーター
